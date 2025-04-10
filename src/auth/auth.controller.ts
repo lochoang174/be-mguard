@@ -5,29 +5,30 @@ import { User } from "src/user/schema.ts/user.schema";
 import { CurrentUser } from "src/decorators/user.decorator";
 import { GoogleValidateGuard } from "./guard/google.guard";
 import { Response } from "express";
+import { ConfigService } from '@nestjs/config';
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService,private configService: ConfigService) {}
 
   @Get("google")
   @UseGuards(AuthGuard("google"))
   async googleAuth(@Req() req) {}
 
-  @Get("google/callback")
+  @Get("callback")
   @UseGuards(AuthGuard("google"))
   googleAuthRedirect(@CurrentUser() user: User, @Res() res: Response) {
-    console.log(user);
+    console.log("User: "+user);
     res.cookie("access_token", user.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       path: "/",
-      sameSite: "lax", // Helps with CSRF protection
+      sameSite: "none", // <-- MUST be 'none' for cross-site cookies
+      secure: true,  
     });
 
-    // Redirect to the client application
-    return res.redirect("http://localhost:3000");
+    const frontendUrl = this.configService.get<string>('FE_URL');
+    return res.redirect(frontendUrl);    // Redirect to the client application
   }
 
   @Get("info")

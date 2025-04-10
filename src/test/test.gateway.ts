@@ -38,32 +38,31 @@ export class TestGateway {
 
   // Xử lý webcam streaming từ frontend
   @SubscribeMessage("webcam-frame")
-  handleWebcamFrame(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+  handleWebcamFrame(
+    @MessageBody() data: string,
+    @ConnectedSocket() client: Socket,
+  ) {
     console.log(`Received webcam frame from ${client.id}`);
-    
-    // Tạo một Observable stream từ dữ liệu ảnh gửi lên
-    // console.log(data[0])
-    // const request$: Observable<CuffDetectionRequest> = from([{ base64Image: data }]);
+    // return;
+    // Create request object for gRPC service
+    const request: CuffDetectionRequest = {
+      base64Image: data,
+      threshold: 0.5, // You can adjust this threshold as needed
+    };
 
-    // // Gọi detectCuffPosition với Observable stream
-    // const responseStream = this.aiService.detectCuffPosition(request$);
-
-    // // Lắng nghe dữ liệu trả về từ AI service
-    // responseStream.subscribe({
-    //   next: (response) => {
-    //     console.log(`Received streaming response: ${JSON.stringify(response)}`);
-    //     client.emit("cuff-detection-result", response); 
-    //   }, 
-    //   error: (error) => {  
-    //     console.error("gRPC Error:", error.message);  
-    //     client.emit("cuff-detection-error", { error: error.message });
-    //   },
-    //   complete: () => {
-    //     console.log("gRPC streaming ended.");
-    //     client.emit("cuff-detection-end", { message: "Streaming ended." });
-    //   },
-    // });
-
-    return { event: "webcam-frame-received", data: { success: true } };
+    // Call detectCuffPosition with the request
+    this.aiService.detectCuffPosition(request).subscribe({
+      next: (response) => {
+        console.log(`Received detection response: ${JSON.stringify(response)}`);
+        client.emit("cuff-detection-result", response);
+      },
+      error: (error) => {  
+        console.error("gRPC Error:", error.message);
+        client.emit("cuff-detection-error", { error: error.message });
+      },
+      complete: () => { 
+        console.log("gRPC call completed.");
+      },
+    });
   }
 }

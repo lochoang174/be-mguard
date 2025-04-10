@@ -7,9 +7,9 @@ import { UserModule } from 'src/user/user.module';
 import { PassportModule } from '@nestjs/passport';
 
 import { GoogleValidateStrategy } from './strategy/googleValidate.strategy';
-@Module({
+@Module({ 
   imports: [ConfigModule, UserModule, PassportModule],
   providers: [GoogleStrategy, AuthService, GoogleValidateStrategy],
   controllers: [AuthController],
 })
-export class AuthModule {}
+export class AuthModule {}  
